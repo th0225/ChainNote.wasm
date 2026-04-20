@@ -1,6 +1,6 @@
 {
-  "name": "frontend",
-  "short_name": "frontend",
+  "name": "ChainNote",
+  "short_name": "ChainNote",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
