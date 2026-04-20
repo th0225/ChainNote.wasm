@@ -1,0 +1,40 @@
+﻿@page "/"
+@inject Web3Service Web3Service
+
+<MudText Typo="Typo.h3"" GutterBottom="true">
+    ChainNote 筆記本
+</MudText>
+
+@if (notes == null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else
+{
+    <MudGrid>
+        @foreach (var note in notes)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText>@note.Content</MudText>
+                        <MudText Typo="Typo.caption">
+                            @DateTimeOffset.FromUnixTimeSeconds(
+                                (long)note.Timestamp).LocalDateTime
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private List<NoteRecord>? notes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string testAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+        notes = await Web3Service.GetMyNotesAsync(testAddress);
+    }
+}
