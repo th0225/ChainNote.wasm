@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/wwwroot/dist/
+**/wwwroot/framework/
+**/appsettings.Development.json
+
+**/out/
+**/cache/
+**/broadcast/
+
+.env
+
+.DS_Store
+.vscode/
+.idea/
