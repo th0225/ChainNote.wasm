@@ -1,40 +1,117 @@
 ﻿@page "/"
 @inject Web3Service Web3Service
+@inject ISnackbar Snackbar
 
-<MudText Typo="Typo.h3"" GutterBottom="true">
-    ChainNote 筆記本
-</MudText>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+        ChainNote 筆記本
+    </MudText>
 
-@if (notes == null)
-{
-    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
-}
-else
-{
-    <MudGrid>
-        @foreach (var note in notes)
-        {
-            <MudItem xs="12" sm="6" md="4">
-                <MudCard>
-                    <MudCardContent>
-                        <MudText>@note.Content</MudText>
-                        <MudText Typo="Typo.caption">
-                            @DateTimeOffset.FromUnixTimeSeconds(
-                                (long)note.Timestamp).LocalDateTime
-                        </MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        }
-    </MudGrid>
-}
+    <MudPaper Elevation="4" Class="pa-6 mb-8">
+        <MudStack Spacing="4">
+            <MudTextField @bind-Value="_newNoteContent"
+                          Label="新筆記內容"
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          Placeholder="新增筆記存入區塊鏈" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="HandleAddNote"
+                       Disabled="@_isProcessing"
+                       StartIcon="@(_isProcessing
+                                ? null
+                                : Icons.Material.Filled.CloudUpload)">
+                @if (_isProcessing)
+                {
+                    <MudProgressCircular Class="ms-n1"
+                                         Size="Size.Small"
+                                         Indeterminate="true" />
+                    <MudText Class="ms-2">交易處理中...</MudText>
+                }
+                else
+                {
+                    <MudText>儲存到區塊鏈</MudText>
+                }
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    <MudText Typo="Typo.h5" Class="mb-4">歷史筆記</MudText>
+    @if (_notes == null)
+    {
+        <MudProgressLinear Color="Color.Info"
+                           Indeterminate="true"
+                           Class="my-7" />
+    }
+    else if (!_notes.Any())
+    {
+        <MudAlert Severity="Severity.Info">
+            目前還沒有任何筆記
+        </MudAlert>
+    }
+    else
+    {
+        <MudTimeline TimelinePosition="TimelinePosition.Start">
+            @foreach (var note in _notes.OrderByDescending(n => n.Timestamp))
+            {
+                <MudTimelineItem Color="Color.Secondary" Size="Size.Small">
+                    <ItemContent>
+                        <MudCard Elevation="2" Class="mb-4">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body1">
+                                    @note.Content
+                                </MudText>
+                                <MudText Typo="Typo.caption"
+                                         Color="Color.Default">
+                                    @DateTimeOffset.FromUnixTimeSeconds(
+                                        (long)note.Timestamp).LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemContent>
+                </MudTimelineItem>
+            }
+        </MudTimeline>
+    }
+</MudContainer>
+
 
 @code {
-    private List<NoteRecord>? notes;
+    private List<NoteRecord>? _notes;
+    string _testAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+    private string _newNoteContent = string.Empty;
+    private bool _isProcessing = false;
 
     protected override async Task OnInitializedAsync()
     {
-        string testAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
-        notes = await Web3Service.GetMyNotesAsync(testAddress);
+        await LoadNotes();
+    }
+
+    private async Task HandleAddNote()
+    {
+        if (string.IsNullOrWhiteSpace(_newNoteContent)) return;
+
+        _isProcessing = true;
+        Console.WriteLine("準備發送...");
+        var result = 
+            await Web3Service.AddNoteAsync(_testAddress, _newNoteContent);
+
+        if (result.success)
+        {
+            Snackbar.Add(result.message, Severity.Success);
+            _newNoteContent = "";
+            await LoadNotes();
+        }
+        else
+        {
+            Snackbar.Add(result.message, Severity.Error);
+        }
+        _isProcessing = false;
+    }
+
+    private async Task LoadNotes()
+    {
+        _notes = await Web3Service.GetMyNotesAsync(_testAddress);
     }
 }

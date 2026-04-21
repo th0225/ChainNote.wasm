@@ -2,6 +2,7 @@ using Nethereum.Web3;
 using Nethereum.JsonRpc.Client;
 using ChainNote.Models;
 using Microsoft.AspNetCore.Components;
+using Nethereum.RPC.Eth.DTOs;
 
 namespace ChainNote.Services;
 
@@ -55,5 +56,51 @@ public class Web3Service
             GetMyNotesOutputDTO>(rawHex);
 
         return result?.Notes ?? [];
+    }
+
+    // 建議改用這個更直覺的寫法，分開處理 TransactionInput
+    public async Task<(bool success, string message)> AddNoteAsync(
+        string userAddress, string content)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(_abi)) await LoadAbiAsync();
+
+            var contract = _web3.Eth.GetContract(_abi, _contractAddress);
+            var addNoteFunction = contract.GetFunction("addNote");
+
+            var accounts = await _web3.Eth.Accounts.SendRequestAsync();
+
+            // 使用 CreateTransactionInput 確保參數對齊
+            // 這裡只傳入 content，保證參數數量是 1
+            var txInput = addNoteFunction.CreateTransactionInput(
+                userAddress, content);
+            
+            // 發送原始交易請求
+            var txHash = await _web3.Eth.Transactions.SendTransaction.SendRequestAsync(txInput);
+
+            // 輪詢收據
+            TransactionReceipt receipt = null;
+            while (receipt == null)
+            {
+                await Task.Delay(500);
+                receipt = await _web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(txHash);
+            }
+
+            return (receipt.Status.Value == 1, "成功");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
+    private async Task LoadAbiAsync()
+    {
+        if (string.IsNullOrEmpty(_abi))
+        {
+            var abiUrl = _nav.ToAbsoluteUri("abi.json").ToString();
+            _abi = await _http.GetStringAsync(abiUrl);
+        }
     }
 }

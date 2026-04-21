@@ -1,6 +1,55 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
-<MudPopoverProvider />
+<MudThemeProvider Theme="@CustomTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-@Body
+<MudLayout>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private MudTheme CustomTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#A68966",          // 杏色/奶茶色 (主要色)
+            Secondary = "#F0E5D1",        // 淺米色 (次要色)
+            Background = "#FFFDF9",       // 奶油白背景
+            AppbarBackground = "#FFFDF9", // 與背景統一，營造無邊框感
+            Surface = "#FFFFFF",          // 卡片表面顏色
+            TextPrimary = "#5F4B32",      // 深咖色文字
+            TextSecondary = "#8D7B68",    // 淺咖色文字
+            ActionDefault = "#E6D5B8",    // 圖標與動作顏色
+            DrawerBackground = "#FFFDF9",
+            Divider = "#F0E5D1"
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#E6D5B8",          // 深色模式下，亮奶油色作為重點色
+            Background = "#1A1A19",       // 深焙咖啡底色
+            Surface = "#262624",          // 卡片表面顏色 (稍亮一點點)
+            AppbarBackground = "rgba(26, 26, 25, 0.6)",
+            TextPrimary = "#E3DED0",      // 暖米白文字
+            TextSecondary = "#8D7B68",    // 淺灰咖文字
+            ActionDefault = "#E6D5B8",
+            Divider = "#333330"
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "20px", // 關鍵：讓所有按鈕、卡片都變圓潤
+            DrawerWidthLeft = "260px"
+        },
+        Typography = new Typography()
+        {
+            Default = new DefaultTypography()
+            {
+                FontFamily = new[] {
+                    "Noto Sans TC", "微軟正黑體", "sans-serif"
+                }
+            }
+        }
+    };
+}
